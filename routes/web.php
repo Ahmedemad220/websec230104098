@@ -41,4 +41,71 @@ Route::get('/minitest', function () {
     return view('minitest', compact('bill'));
 });
 
-      
+Route::get('/transcript', function () {
+    $transcript = [
+        ['course' => 'Operating Systems', 'credit' => 3, 'grade' => 'A'],
+        ['course' => 'Web Development', 'credit' => 4, 'grade' => 'B+'],
+        ['course' => 'Computer Networks', 'credit' => 3, 'grade' => 'A-'],
+        ['course' => 'Cyber Security', 'credit' => 3, 'grade' => 'B'],
+        ['course' => 'Machine Learning', 'credit' => 4, 'grade' => 'A'],
+    ];
+
+    return view('transcript', compact('transcript'));
+});
+
+use App\Http\Controllers\Web\ProductsController;
+
+Route::get('products', [ProductsController::class, 'list'])->name('products_list');
+Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
+Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
+Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
+
+use App\Http\Controllers\GradesController;
+Route::resource('grades', GradesController::class);
+
+use App\Http\Controllers\QuestionController;
+Route::resource('questions', QuestionController::class);
+Route::get('exam/start', [QuestionController::class, 'startExam'])->name('exam.start');
+Route::post('exam/submit', [QuestionController::class, 'submitExam'])->name('exam.submit');
+Route::get('/questions/{id}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
+
+use App\Http\Controllers\ProfileController;
+
+
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
+Route::get('/register', function () {
+    return view('auth.register');
+})->name('register');
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+Route::get('/profile', function () {
+    return view('profile'); // Make sure profile.blade.php exists in resources/views
+})->name('profile');
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+});
+
+
+
+use Illuminate\Support\Facades\Auth;
+
+Route::post('/logout', function () {
+    Auth::logout();
+    return redirect('/login'); // Redirect to login page after logout
+})->name('logout');
+
+
