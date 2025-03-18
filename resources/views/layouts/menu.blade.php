@@ -25,9 +25,6 @@
             <a class="nav-link" href="{{ route('products_list') }}">Products</a>
         </li>
 
-        <li class="nav-item">
-            <a class="nav-link" href="{{ route('grades.index') }}">Grades</a>
-        </li>
 
         <ul class="navbar-nav">
             <li class="nav-item">
@@ -64,7 +61,19 @@
                     <a class="nav-link" href="{{ route('register') }}">Register</a>
                 </li>
             @endauth
+
         </ul>        
+        @auth
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    Books Management
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('books.index') }}">View Books</a></li>
+                    <li><a class="dropdown-item" href="{{ route('books.create') }}">Add Book</a></li>
+                </ul>
+            </li>
+        @endauth
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="btn btn-danger">Logout</button>

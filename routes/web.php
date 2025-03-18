@@ -99,6 +99,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 });
 
+use App\Http\Controllers\Auth\RegisterController;
+
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
 
 
 use Illuminate\Support\Facades\Auth;
@@ -109,3 +113,13 @@ Route::post('/logout', function () {
 })->name('logout');
 
 
+
+
+
+use App\Http\Controllers\BookController;
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/books', [BookController::class, 'index'])->name('books.index');
+    Route::get('/books/create', [BookController::class, 'create'])->name('books.create');
+    Route::post('/books', [BookController::class, 'store'])->name('books.store');
+});
