@@ -1,125 +1,59 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/multable', function () {
-    return view('multable');
-});
-
-Route::get('/even', function () {
-    return view('even');
-});
-
-Route::get('/prime', function () {
-    return view('prime'); 
-});
-
-Route::get('/minitest', function () {
- $bill = [
-     ['item' => 'Apples', 'quantity' => 2, 'price' => 3.50],
-     ['item' => 'Milk', 'quantity' => 1, 'price' => 4.00],
-     ['item' => 'Bread', 'quantity' => 1, 'price' => 2.50],
-     ['item' => 'Eggs', 'quantity' => 12, 'price' => 5.00],
-     ['item' => 'Chicken', 'quantity' => 1, 'price' => 8.75],
- ];
-
-    return view('minitest', compact('bill'));
-});
-
-Route::get('/transcript', function () {
-    $transcript = [
-        ['course' => 'Operating Systems', 'credit' => 3, 'grade' => 'A'],
-        ['course' => 'Web Development', 'credit' => 4, 'grade' => 'B+'],
-        ['course' => 'Computer Networks', 'credit' => 3, 'grade' => 'A-'],
-        ['course' => 'Cyber Security', 'credit' => 3, 'grade' => 'B'],
-        ['course' => 'Machine Learning', 'credit' => 4, 'grade' => 'A'],
-    ];
-
-    return view('transcript', compact('transcript'));
-});
-
 use App\Http\Controllers\Web\ProductsController;
+use App\Http\Controllers\Web\UsersController;
 
+// ✅ User Authentication & Profile Management
+Route::get('register', [UsersController::class, 'register'])->name('register');
+Route::post('register', [UsersController::class, 'doRegister'])->name('do_register');
+Route::get('login', [UsersController::class, 'login'])->name('login');
+Route::post('login', [UsersController::class, 'doLogin'])->name('do_login');
+Route::get('logout', [UsersController::class, 'doLogout'])->name('do_logout');
+Route::get('users', [UsersController::class, 'list'])->name('users');
+Route::get('profile/{user?}', [UsersController::class, 'profile'])->name('profile');
+Route::get('users/edit/{user?}', [UsersController::class, 'edit'])->name('users_edit');
+Route::post('users/save/{user}', [UsersController::class, 'save'])->name('users_save');
+Route::get('users/delete/{user}', [UsersController::class, 'delete'])->name('users_delete');
+Route::get('users/edit_password/{user?}', [UsersController::class, 'editPassword'])->name('edit_password');
+Route::post('users/save_password/{user}', [UsersController::class, 'savePassword'])->name('save_password');
+
+// ✅ Product Management (For Employees & Admin)
 Route::get('products', [ProductsController::class, 'list'])->name('products_list');
 Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
 Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
 Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
 
-use App\Http\Controllers\GradesController;
-Route::resource('grades', GradesController::class);
-
-use App\Http\Controllers\QuestionController;
-Route::resource('questions', QuestionController::class);
-Route::get('exam/start', [QuestionController::class, 'startExam'])->name('exam.start');
-Route::post('exam/submit', [QuestionController::class, 'submitExam'])->name('exam.submit');
-Route::get('/questions/{id}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
-
-use App\Http\Controllers\ProfileController;
-
-
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register');
-
-Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
-Auth::routes();
-
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
-Route::get('/profile', function () {
-    return view('profile'); // Make sure profile.blade.php exists in resources/views
-})->name('profile');
-
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+// ✅ Purchase Product (For Customers)
+Route::middleware(['auth', 'role:customer'])->group(function () {
+    Route::post('/products/{product}/purchase', [ProductsController::class, 'purchase'])->name('products.purchase');
+    Route::get('/my-orders', [ProductsController::class, 'myOrders'])->name('products.myOrders');
 });
 
-use App\Http\Controllers\Auth\RegisterController;
-
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register']);
 
 
-use Illuminate\Support\Facades\Auth;
-
-Route::post('/logout', function () {
-    Auth::logout();
-    return redirect('/login'); // Redirect to login page after logout
-})->name('logout');
+Route::post('users/{user}/add-credit', [UsersController::class, 'addCredit'])->name('users_add_credit')->middleware('auth');
 
 
+// ✅ Employee Actions (Manage Customers)
+Route::middleware(['auth', 'role:employee'])->group(function () {
+    Route::get('/customers', [ProductsController::class, 'listCustomers'])->name('employees.listCustomers');
+    Route::post('/customers/{customer}/add-credit', [ProductsController::class, 'addCredit'])->name('employees.addCredit');
+});
 
-
-
-use App\Http\Controllers\BookController;
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/books', [BookController::class, 'index'])->name('books.index');
-    Route::get('/books/create', [BookController::class, 'create'])->name('books.create');
-    Route::post('/books', [BookController::class, 'store'])->name('books.store');
+// ✅ Home Page & Test Views
+Route::get('/', function () {
+    return view('welcome');
+});
+Route::get('/multable', function (Request $request) {
+    $j = $request->number ?? 5;
+    $msg = $request->msg;
+    return view('multable', compact("j", "msg"));
+});
+Route::get('/even', function () {
+    return view('even');
+});
+Route::get('/prime', function () {
+    return view('prime');
 });
