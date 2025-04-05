@@ -7,28 +7,27 @@
     @if ($orders->isEmpty())
         <div class="alert alert-info">You have not purchased any products yet.</div>
     @else
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Order #</th>
+                    <th>#</th>
                     <th>Product</th>
-                    <th>Model</th>
                     <th>Price</th>
-                    <th>Purchased At</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($orders as $order)
-                <tr>
-                    <td>{{ $order->id }}</td>
-                    <td>{{ $order->product->name }}</td>
-                    <td>{{ $order->product->model }}</td>
-                    <td>{{ number_format($order->price, 2) }} EGP</td>
-                    <td>{{ $order->created_at->format('Y-m-d H:i') }}</td>
-                </tr>
+                @foreach($orders as $index => $order)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $order->product->name ?? 'N/A' }}</td>
+                        <td>{{ $order->price }}</td>
+                        <td>{{ $order->status }}</td>
+                    </tr>
                 @endforeach
             </tbody>
         </table>
+
     @endif
 </div>
 @endsection

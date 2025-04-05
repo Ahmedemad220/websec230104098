@@ -101,7 +101,16 @@
                         <tr><th>Code</th><td>{{ $product->code }}</td></tr>
                         <tr><th>Price</th><td>{{ $product->price }}</td></tr>
                         <tr><th>Description</th><td>{{ $product->description }}</td></tr>
-                        <tr><th>In Stock</th><td>{{ $product->quantity }}</td></tr>
+                        <<tr>
+                            <th>In Stock</th>
+                            <td>
+                                @if($product->quantity == 0)
+                                    <span class="text-danger fw-bold">Out of stock</span>
+                                @else
+                                    {{ $product->quantity }}
+                                @endif
+                            </td>
+                        </tr>
                     </table>
                 </div>
             </div>

@@ -76,9 +76,13 @@ class ProductsController extends Controller
     // ✅ LIST CUSTOMER'S PURCHASED PRODUCTS
     public function myOrders()
     {
-        $orders = Order::where('user_id', Auth::id())->with('product')->get();
+        $orders = \App\Models\Order::where('user_id', Auth::id())
+            ->with(['product', 'user'])
+            ->get();
+    
         return view('products.orders', compact('orders'));
     }
+    
 
     // ✅ EDIT PRODUCT (For Employees & Admin)
     public function edit(Request $request, Product $product = null)
