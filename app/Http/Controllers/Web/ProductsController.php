@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ProductsController extends Controller
 {
@@ -22,53 +23,51 @@ class ProductsController extends Controller
     {
         $query = Product::query();
 
-        // Filters
-        $query->when($request->keywords, fn($q) => 
+        $query->when($request->keywords, fn($q) =>
             $q->where("name", "like", "%$request->keywords%"));
 
-        $query->when($request->min_price, fn($q) => 
+        $query->when($request->min_price, fn($q) =>
             $q->where("price", ">=", $request->min_price));
 
-        $query->when($request->max_price, fn($q) => 
+        $query->when($request->max_price, fn($q) =>
             $q->where("price", "<=", $request->max_price));
 
-        $query->when($request->order_by, fn($q) => 
+        $query->when($request->order_by, fn($q) =>
             $q->orderBy($request->order_by, $request->order_direction ?? "ASC"));
 
         $products = $query->get();
+        $customers = User::role('customer')->get();
 
-        return view('products.list', compact('products'));
+        return view('products.list', compact('products', 'customers'));
     }
 
     // ✅ PURCHASE PRODUCT (For Customers)
-    public function purchase(Request $request, Product $product)
+    public function purchase(Product $product)
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        if (!$user->hasRole('customer')) {
-            abort(403, 'Only customers can make purchases.');
-        }
-
-        // Check if product is in stock
-        if ($product->stock < 1) {
-            return redirect()->back()->with('error', 'Product is out of stock.');
-        }
-
-        // Check if user has enough credit
         if ($user->credit < $product->price) {
-            return redirect()->back()->with('error', 'Insufficient account credit.');
+            return view('errors.insufficient_credit');
         }
 
-        // Deduct credit & decrease stock
-        DB::transaction(function () use ($user, $product) {
-            $user->decrement('credit', $product->price);
-            $product->decrement('stock');
+        if ($product->quantity <= 0) {
+            return redirect()->back()->with('error', 'Out of stock!');
+        }
 
+        DB::transaction(function () use ($user, $product) {
+            // 1. Create order
             Order::create([
                 'user_id' => $user->id,
                 'product_id' => $product->id,
                 'price' => $product->price,
+                'status' => 'pending'
             ]);
+
+            // 2. Decrease product quantity
+            $product->decrement('quantity');
+
+            // 3. Deduct credit
+            $user->decrement('credit', $product->price);
         });
 
         return redirect()->route('products_list')->with('success', 'Purchase successful!');
@@ -84,7 +83,7 @@ class ProductsController extends Controller
     // ✅ EDIT PRODUCT (For Employees & Admin)
     public function edit(Request $request, Product $product = null)
     {
-        if (!Auth::user()->hasAnyRole(['admin', 'employee'])) {
+        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -95,16 +94,20 @@ class ProductsController extends Controller
     // ✅ SAVE PRODUCT (For Employees & Admin)
     public function save(Request $request, Product $product = null)
     {
-        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
             'code' => ['required', 'string', 'max:32'],
             'name' => ['required', 'string', 'max:128'],
             'model' => ['required', 'string', 'max:256'],
             'description' => ['required', 'string', 'max:1024'],
             'price' => ['required', 'numeric'],
-            'stock' => ['required', 'integer'],
+            'quantity' => ['required', 'integer'],
         ]);
 
-        if (!Auth::user()->hasAnyRole(['admin', 'employee'])) {
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -118,38 +121,75 @@ class ProductsController extends Controller
     // ✅ DELETE PRODUCT (For Employees & Admin)
     public function delete(Product $product)
     {
-        if (!Auth::user()->hasPermissionTo('delete_products')) {
+        if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
             abort(403, 'Unauthorized action.');
+        }
+
+        if (!Auth::user()->can('delete_products')) {
+            abort(403, 'Permission denied.');
         }
 
         $product->delete();
         return redirect()->route('products_list')->with('success', 'Product deleted successfully.');
     }
 
-    // ✅ LIST CUSTOMERS (For Employees)
+    // ✅ LIST CUSTOMERS (For Employees Only)
     public function listCustomers()
     {
-        if (!Auth::user()->hasRole('employee')) {
+        if (!Auth::user()->hasRole('Employee')) {
             abort(403, 'Only employees can view this.');
         }
 
-        $customers = User::where('role', 'customer')->get();
+        $customers = User::role('customer')->get();
         return view('employees.customers', compact('customers'));
     }
 
     // ✅ ADD CREDIT TO CUSTOMER (For Employees)
     public function addCredit(Request $request, User $customer)
     {
-        if (!Auth::user()->hasRole('employee')) {
+        if (!Auth::user()->hasRole('Employee')) {
             abort(403, 'Unauthorized action.');
         }
 
-        $this->validate($request, [
-            'amount' => ['required', 'numeric', 'min:1'],
+        $validator = Validator::make($request->all(), [
+            'amount' => ['required', 'numeric', 'min:0.01'],
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
         $customer->increment('credit', $request->amount);
 
         return redirect()->back()->with('success', 'Credit added successfully.');
     }
+
+public function listOrders()
+{
+    // Fetch all orders with related product and user data
+    $orders = Order::with('product', 'user')->get();
+
+    // Return the orders view with the data
+    return view('products.listorders', compact('orders'));
+}
+
+public function updateStatus(Request $request, $orderId)
+{
+    // Validate the incoming status
+    $validated = $request->validate([
+        'status' => 'required|string|in:pending,completed,canceled', // Add other statuses as needed
+    ]);
+
+    // Find the order by ID
+    $order = Order::findOrFail($orderId);
+
+    // Update the status
+    $order->status = $validated['status'];
+    $order->save();
+
+    // Redirect back with a success message
+    return redirect()->route('orders.list')->with('success', 'Order status updated successfully.');
+}
+
+
 }

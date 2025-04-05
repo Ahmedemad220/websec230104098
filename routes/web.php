@@ -11,35 +11,45 @@ Route::post('register', [UsersController::class, 'doRegister'])->name('do_regist
 Route::get('login', [UsersController::class, 'login'])->name('login');
 Route::post('login', [UsersController::class, 'doLogin'])->name('do_login');
 Route::get('logout', [UsersController::class, 'doLogout'])->name('do_logout');
-Route::get('users', [UsersController::class, 'list'])->name('users');
+Route::get('users', [UsersController::class, 'list'])->name('users')->middleware('can:show_users');
 Route::get('profile/{user?}', [UsersController::class, 'profile'])->name('profile');
-Route::get('users/edit/{user?}', [UsersController::class, 'edit'])->name('users_edit');
+Route::get('users/edit/{user?}', [UsersController::class, 'edit'])->name('users_edit')->middleware('can:edit_users');
 Route::post('users/save/{user}', [UsersController::class, 'save'])->name('users_save');
-Route::get('users/delete/{user}', [UsersController::class, 'delete'])->name('users_delete');
+Route::get('users/delete/{user}', [UsersController::class, 'delete'])->name('users_delete')->middleware('can:delete_users');
 Route::get('users/edit_password/{user?}', [UsersController::class, 'editPassword'])->name('edit_password');
 Route::post('users/save_password/{user}', [UsersController::class, 'savePassword'])->name('save_password');
 
 // ✅ Product Management (For Employees & Admin)
 Route::get('products', [ProductsController::class, 'list'])->name('products_list');
-Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit');
+Route::get('products/edit/{product?}', [ProductsController::class, 'edit'])->name('products_edit')->middleware('can:edit_products');
 Route::post('products/save/{product?}', [ProductsController::class, 'save'])->name('products_save');
-Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete');
+Route::get('products/delete/{product}', [ProductsController::class, 'delete'])->name('products_delete')->middleware('can:delete_products');
 
 // ✅ Purchase Product (For Customers)
-Route::middleware(['auth', 'role:customer'])->group(function () {
-    Route::post('/products/{product}/purchase', [ProductsController::class, 'purchase'])->name('products.purchase');
-    Route::get('/my-orders', [ProductsController::class, 'myOrders'])->name('products.myOrders');
-});
+Route::post('/products/{product}/purchase', [ProductsController::class, 'purchase'])->name('products.purchase');
+Route::get('/my-orders', [ProductsController::class, 'myOrders'])->name('products.myOrders');
 
 
+// Show form to create a new user (admin only)
+Route::get('users/create', [UsersController::class, 'create'])->name('users_create')->middleware('can:admin_users');
 
-Route::post('users/{user}/add-credit', [UsersController::class, 'addCredit'])->name('users_add_credit')->middleware('auth');
+// Save new user
+Route::post('users/create', [UsersController::class, 'store'])->name('users_store')->middleware('can:admin_users');
 
 
-// ✅ Employee Actions (Manage Customers)
-Route::middleware(['auth', 'role:employee'])->group(function () {
-    Route::get('/customers', [ProductsController::class, 'listCustomers'])->name('employees.listCustomers');
-    Route::post('/customers/{customer}/add-credit', [ProductsController::class, 'addCredit'])->name('employees.addCredit');
+// Route::post('/products/{product}/purchase', [ProductsController::class, 'purchase'])->name('products.purchase');
+
+
+Route::get('/customers', [UsersController::class, 'listCustomers'])->name('customers.list');
+Route::post('/customers/{id}/charge-credit', [UsersController::class, 'chargeCredit'])->name('customers.charge-credit');
+
+
+Route::get('/my-orders', [ProductsController::class, 'myOrders'])->name('orders.my');
+
+Route::middleware(['auth:web', 'can:list_orders'])->group(function () {
+    // Route for Admin to view all orders
+    Route::get('/orders', [ProductsController::class, 'listOrders'])->name('orders.list');
+    Route::patch('/orders/{orderId}/update-status', [ProductsController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
 // ✅ Home Page & Test Views

@@ -1,15 +1,10 @@
-
 <?php
-   
-if (!function_exists('isPrime')) {
-    function isPrime($number)
-    {
-        if($number<=1) return false;
-        $i = $number - 1;
-        while($i>1) {
-        if($number%$i==0) return false;
-        $i--;
-        }
-        return true;
+
+function isPrime($num)
+{
+    if ($num < 2) return false;
+    for ($i = 2; $i <= sqrt($num); $i++) {
+        if ($num % $i === 0) return false;
     }
+    return true;
 }

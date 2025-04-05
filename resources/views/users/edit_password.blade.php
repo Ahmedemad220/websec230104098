@@ -7,7 +7,7 @@
             {{ csrf_field() }}
             @foreach($errors->all() as $error)
             <div class="alert alert-danger">
-            <strong>Error!</strong> {{$error}}
+                <strong>Error!</strong> {{$error}}
             </div>
             @endforeach
 
@@ -18,19 +18,19 @@
                         <input type="password" class="form-control" placeholder="Old Password" name="old_password" required>
                     </div>
                 </div>
-            @endcan
+            @endif
 
             <div class="row mb-2">
                 <div class="col-12">
-                    <label class="form-label">Password:</label>
-                    <input type="password" class="form-control" placeholder="Password" name="password" required>
+                    <label class="form-label">New Password:</label>
+                    <input type="password" class="form-control" placeholder="New Password" name="password" required>
                 </div>
             </div>
             
             <div class="row mb-2">
                 <div class="col-12">
-                    <label class="form-label">Password Confirmtion:</label>
-                    <input type="password" class="form-control" placeholder="Password Confirmtion" name="password_confirmation" required>
+                    <label class="form-label">Password Confirmation:</label>
+                    <input type="password" class="form-control" placeholder="Confirm New Password" name="password_confirmation" required>
                 </div>
             </div>
 

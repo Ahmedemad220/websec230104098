@@ -35,8 +35,12 @@
             <input type="number" class="form-control" name="price" placeholder="Price" required step="0.01" value="{{ old('price', $product->price) }}">
         </div>
         <div class="col-6">
-            <label for="stock" class="form-label">Stock Quantity:</label>
-            <input type="number" class="form-control" name="stock" placeholder="Stock" required min="0" value="{{ old('stock', $product->stock) }}">
+            <label for="quantity" class="form-label">Quantity:</label>
+            @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Employee'))
+                <input type="number" class="form-control" name="quantity" placeholder="Quantity" required min="0" value="{{ old('quantity', $product->quantity) }}">
+            @else
+                <input type="number" class="form-control" disabled value="{{ old('quantity', $product->quantity) }}">
+            @endif
         </div>
     </div>
 
@@ -50,14 +54,18 @@
     <div class="row mb-2">
         <div class="col">
             <label for="photo" class="form-label">Photo:</label>
-            <input type="file" class="form-control" name="photo" accept="image/*">
-            @if($product->photo)
-                <img src="{{ asset('storage/' . $product->photo) }}" alt="Product Image" class="img-thumbnail mt-2" width="150">
+            @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Employee'))
+                <input type="file" class="form-control" name="photo" accept="image/*">
+                @if($product->photo)
+                    <img src="{{ asset('storage/' . $product->photo) }}" alt="Product Image" class="img-thumbnail mt-2" width="150">
+                @endif
             @endif
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+    @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Employee'))
+        <button type="submit" class="btn btn-primary">Submit</button>
+    @endif
 </form>
 
 @endsection
