@@ -99,9 +99,7 @@ class UsersController extends Controller
     public function edit(Request $request, User $user = null)
     {
         $user = $user ?? auth()->user();
-        if (auth()->id() != $user?->id) {
-            if (!auth()->user()->hasPermissionTo('edit_users')) abort(401);
-        }
+
 
         $roles = [];
         foreach (Role::all() as $role) {
@@ -144,9 +142,6 @@ class UsersController extends Controller
     public function delete(Request $request, User $user)
     {
         if (!auth()->user()->hasPermissionTo('delete_users')) abort(401);
-
-        // $user->delete(); // Optional, depends on whether you want soft delete
-
         return redirect()->route('users');
     }
 
@@ -181,31 +176,12 @@ class UsersController extends Controller
         return redirect(route('profile', ['user' => $user->id]));
     }
 
-    public function addCredit(Request $request, User $user)
-    {
-        if (!Auth::user()->hasRole('Employee')) {
-            abort(403, 'Unauthorized action.');
-        }
 
-        if (!$user->hasRole('customer')) {
-            return redirect()->back()->with('error', 'You can only add credit to customers.');
-        }
-
-        $request->validate([
-            'amount' => ['required', 'numeric', 'min:1'],
-        ]);
-
-        $user->increment('credit', $request->amount);
-
-        return redirect()->back()->with('success', 'Credit added successfully.');
-    }
-
-    // ✅ Midterm: Show Users by Role
     public function showUsersByRole(Request $request)
     {
         if (!auth()->user()->hasPermissionTo('show_users')) abort(403);
 
-        $role = $request->get('role'); // optional
+        $role = $request->get('role');
 
         $query = User::query();
 
@@ -218,7 +194,6 @@ class UsersController extends Controller
         return view('users.by_role', compact('users', 'role'));
     }
 
-    // ✅ Midterm: Show My Credit
     public function showCredit()
     {
         $user = auth()->user();
@@ -254,30 +229,22 @@ public function store(Request $request)
 
 public function listCustomers()
 {
-    // Get all users with the 'Customer' role
     $customers = User::role('Customer')->get();
 
-    // Return the view and pass the customers data to it
     return view('users.list-customer', compact('customers'));
 }
 
 public function chargeCredit(Request $request, $id)
 {
-    // Validate that the credit is a positive number
     $validated = $request->validate([
-        'credit' => 'required|numeric|min:0.01',  // Credit must be a positive value
+        'credit' => 'required|numeric|min:0.01',  
     ]);
 
-    // Find the customer by ID
     $customer = User::findOrFail($id);
 
-    // Charge the customer's credit
-    $customer->credit += $validated['credit'];  // Add the credit value to the existing balance
-
-    // Save the updated credit to the database
+    $customer->credit += $validated['credit']; 
     $customer->save();
 
-    // Redirect back with a success message
     return redirect()->route('customers.list')->with('success', 'Credit charged successfully.');
 }
 

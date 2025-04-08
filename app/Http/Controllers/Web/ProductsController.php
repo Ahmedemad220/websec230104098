@@ -18,7 +18,6 @@ class ProductsController extends Controller
         $this->middleware('auth:web');
     }
 
-    // ✅ LIST PRODUCTS (For Customers & Employees)
     public function list(Request $request)
     {
         $query = Product::query();
@@ -41,7 +40,6 @@ class ProductsController extends Controller
         return view('products.list', compact('products', 'customers'));
     }
 
-    // ✅ PURCHASE PRODUCT (For Customers)
     public function purchase(Product $product)
     {
         $user = auth()->user();
@@ -62,18 +60,13 @@ class ProductsController extends Controller
                 'price' => $product->price,
                 'status' => 'pending'
             ]);
-
-            // 2. Decrease product quantity
             $product->decrement('quantity');
-
-            // 3. Deduct credit
             $user->decrement('credit', $product->price);
         });
 
         return redirect()->route('products_list')->with('success', 'Purchase successful!');
     }
 
-    // ✅ LIST CUSTOMER'S PURCHASED PRODUCTS
     public function myOrders()
     {
         $orders = \App\Models\Order::where('user_id', Auth::id())
@@ -84,7 +77,6 @@ class ProductsController extends Controller
     }
     
 
-    // ✅ EDIT PRODUCT (For Employees & Admin)
     public function edit(Request $request, Product $product = null)
     {
         if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
@@ -95,7 +87,6 @@ class ProductsController extends Controller
         return view('products.edit', compact('product'));
     }
 
-    // ✅ SAVE PRODUCT (For Employees & Admin)
     public function save(Request $request, Product $product = null)
     {
         $validator = Validator::make($request->all(), [
@@ -122,7 +113,6 @@ class ProductsController extends Controller
         return redirect()->route('products_list')->with('success', 'Product saved successfully.');
     }
 
-    // ✅ DELETE PRODUCT (For Employees & Admin)
     public function delete(Product $product)
     {
         if (!Auth::user()->hasAnyRole(['Admin', 'Employee'])) {
@@ -137,7 +127,6 @@ class ProductsController extends Controller
         return redirect()->route('products_list')->with('success', 'Product deleted successfully.');
     }
 
-    // ✅ LIST CUSTOMERS (For Employees Only)
     public function listCustomers()
     {
         if (!Auth::user()->hasRole('Employee')) {
@@ -148,7 +137,6 @@ class ProductsController extends Controller
         return view('employees.customers', compact('customers'));
     }
 
-    // ✅ ADD CREDIT TO CUSTOMER (For Employees)
     public function addCredit(Request $request, User $customer)
     {
         if (!Auth::user()->hasRole('Employee')) {
@@ -170,28 +158,23 @@ class ProductsController extends Controller
 
 public function listOrders()
 {
-    // Fetch all orders with related product and user data
     $orders = Order::with('product', 'user')->get();
 
-    // Return the orders view with the data
     return view('products.listorders', compact('orders'));
 }
 
 public function updateStatus(Request $request, $orderId)
 {
-    // Validate the incoming status
     $validated = $request->validate([
-        'status' => 'required|string|in:pending,completed,canceled', // Add other statuses as needed
+        'status' => 'required|string|in:pending,completed,canceled',
     ]);
 
     // Find the order by ID
     $order = Order::findOrFail($orderId);
 
-    // Update the status
     $order->status = $validated['status'];
     $order->save();
 
-    // Redirect back with a success message
     return redirect()->route('orders.list')->with('success', 'Order status updated successfully.');
 }
 

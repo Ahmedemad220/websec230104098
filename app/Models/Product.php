@@ -17,7 +17,7 @@ class Product extends Model
         'description',
         'photo',
         'quantity',
-        'created_by', // To track which employee/admin added the product
+        'created_by',
     ];
 
     /**
