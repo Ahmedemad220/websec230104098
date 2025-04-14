@@ -43,6 +43,17 @@ Route::post('users/create', [UsersController::class, 'store'])->name('users_stor
 Route::get('/customers', [UsersController::class, 'listCustomers'])->name('customers.list');
 Route::post('/customers/{id}/charge-credit', [UsersController::class, 'chargeCredit'])->name('customers.charge-credit');
 
+Route::get('verify', [UsersController::class, 'verify'])->name('verify');
+// routes/web.php
+
+
+
+Route::get('/auth/google/redirect', [UsersController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/auth/google/callback', [UsersController::class, 'handleGoogleCallback']);
+
+
+
+
 
 Route::get('/my-orders', [ProductsController::class, 'myOrders'])->name('orders.my');
 
@@ -67,3 +78,6 @@ Route::get('/even', function () {
 Route::get('/prime', function () {
     return view('prime');
 });
+
+
+

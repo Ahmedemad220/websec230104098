@@ -169,7 +169,6 @@ public function updateStatus(Request $request, $orderId)
         'status' => 'required|string|in:pending,completed,canceled',
     ]);
 
-    // Find the order by ID
     $order = Order::findOrFail($orderId);
 
     $order->status = $validated['status'];
@@ -177,6 +176,8 @@ public function updateStatus(Request $request, $orderId)
 
     return redirect()->route('orders.list')->with('success', 'Order status updated successfully.');
 }
+
+
 
 
 }

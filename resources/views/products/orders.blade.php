@@ -22,7 +22,7 @@
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $order->product->name ?? 'N/A' }}</td>
                         <td>{{ $order->price }}</td>
-                        <td>{{ $order->status }}</td>
+                        <td>{{ $order->status }}</td> 
                     </tr>
                 @endforeach
             </tbody>
