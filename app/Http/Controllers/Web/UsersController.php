@@ -15,6 +15,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\VerificationEmail;
+use App\Mail\PasswordResetEmail;
 
 class UsersController extends Controller
 {
@@ -105,20 +106,20 @@ class UsersController extends Controller
         try {
             $decryptedData = json_decode(Crypt::decryptString($request->token), true);
         } catch (\Exception $e) {
-            abort(401, 'Invalid or expired verification link.');
+            return redirect('/')->withErrors('Invalid or expired verification link.');
         }
-
+    
         $user = User::find($decryptedData['id']);
-
+    
         if (!$user) {
-            abort(401, 'User not found.');
+            return redirect('/')->withErrors('User not found.');
         }
-
+    
         if (!$user->email_verified_at) {
             $user->email_verified_at = Carbon::now();
             $user->save();
         }
-
+    
         return view('users.verified', compact('user'));
     }
 
@@ -329,5 +330,66 @@ class UsersController extends Controller
             return redirect('/login')->withErrors('Unable to login using Google.');
         }
     }
+
+    public function showForgotForm()
+{
+    return view('auth.forgot-password');
+}
+
+// Send password reset email
+public function sendResetLink(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email|exists:users,email',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+
+    $tokenData = [
+        'id' => $user->id,
+        'email' => $user->email,
+        'timestamp' => now()->timestamp,
+    ];
+
+    $token = Crypt::encryptString(json_encode($tokenData));
+    $resetLink = route('password.reset', ['token' => $token]);
+
+    Mail::to($user->email)->send(new PasswordResetEmail($resetLink));
+
+    return back()->with('success', 'We sent a password reset link to your email.');
+}
+
+// Show form to reset password
+public function showResetForm($token)
+{
+    try {
+        $data = json_decode(Crypt::decryptString($token), true);
+    } catch (\Exception $e) {
+        return redirect()->route('password.request')->withErrors(['token' => 'Invalid or expired reset link.']);
+    }
+
+    return view('auth.reset-password', ['token' => $token, 'email' => $data['email']]);
+}
+
+// Handle the password reset
+public function resetPassword(Request $request)
+{
+    $request->validate([
+        'token' => 'required',
+        'password' => 'required|min:6|confirmed',
+    ]);
+
+    try {
+        $data = json_decode(Crypt::decryptString($request->token), true);
+    } catch (\Exception $e) {
+        return back()->withErrors(['token' => 'Invalid or expired token.']);
+    }
+
+    $user = User::where('id', $data['id'])->where('email', $data['email'])->firstOrFail();
+    $user->password = Hash::make($request->password);
+    $user->save();
+
+    return redirect()->route('login')->with('success', 'Your password has been reset successfully!');
+}
 
 }

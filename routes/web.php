@@ -63,6 +63,22 @@ Route::middleware(['auth:web', 'can:list_orders'])->group(function () {
     Route::patch('/orders/{orderId}/update-status', [ProductsController::class, 'updateStatus'])->name('orders.updateStatus');
 });
 
+
+
+// Show form to request password reset
+Route::get('/forgot-password', [UsersController::class, 'showForgotForm'])->name('password.request');
+
+// Handle request and send email
+Route::post('/forgot-password', [UsersController::class, 'sendResetLink'])->name('password.email');
+
+// Show reset form
+Route::get('/reset-password/{token}', [UsersController::class, 'showResetForm'])->name('password.reset');
+
+// Handle password reset
+Route::post('/reset-password', [UsersController::class, 'resetPassword'])->name('password.update');
+
+
+
 // ✅ Home Page & Test Views
 Route::get('/', function () {
     return view('welcome');
