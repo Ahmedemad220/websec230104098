@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\ProductsController;
 use App\Http\Controllers\Web\UsersController;
+use App\Http\Controllers\Web\SocialAuthController;
+
 
 // ✅ User Authentication & Profile Management
 Route::get('register', [UsersController::class, 'register'])->name('register');
@@ -77,6 +79,15 @@ Route::get('/reset-password/{token}', [UsersController::class, 'showResetForm'])
 // Handle password reset
 Route::post('/reset-password', [UsersController::class, 'resetPassword'])->name('password.update');
 
+
+
+
+Route::get('auth/facebook', [SocialAuthController::class, 'redirectToFacebook'])->name('facebook.login');
+Route::get('auth/facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
+
+
+Route::get('/auth/github/redirect', [UsersController::class, 'redirectToGithub'])->name('github.redirect');
+Route::get('/auth/github/callback', [UsersController::class, 'handleGithubCallback']);
 
 
 // ✅ Home Page & Test Views

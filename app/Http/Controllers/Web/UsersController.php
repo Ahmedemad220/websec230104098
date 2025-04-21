@@ -392,4 +392,22 @@ public function resetPassword(Request $request)
     return redirect()->route('login')->with('success', 'Your password has been reset successfully!');
 }
 
+public function redirectToGithub()
+{
+    return Socialite::driver('github')->redirect();
+}
+
+public function handleGithubCallback()
+{
+    $githubUser = Socialite::driver('github')->user();
+
+    $user = User::firstOrCreate(
+        ['email' => $githubUser->getEmail()],
+        ['name' => $githubUser->getName() ?? $githubUser->getNickname()]
+    );
+
+    Auth::login($user);
+    return redirect()->intended('/');
+}
+
 }

@@ -61,7 +61,8 @@ class ProductsController extends Controller
                 'status' => 'pending'
             ]);
             $product->decrement('quantity');
-            $user->decrement('credit', $product->price);
+            $user->credit -= $product->price;
+            $user->save();
         });
 
         return redirect()->route('products_list')->with('success', 'Purchase successful!');
