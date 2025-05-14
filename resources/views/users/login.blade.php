@@ -48,6 +48,7 @@
               <a href="{{ route('github.redirect') }}" class="btn btn-outline-primary mx-1">
                 <img src="images/github.png" alt="GitHub Logo" style="width: 30px; height: 30px;">
               </a>
+              
           </div>
 
           <!-- Forgot Password Link -->

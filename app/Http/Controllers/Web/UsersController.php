@@ -191,6 +191,8 @@ class UsersController extends Controller
     {
         if (!auth()->user()->hasPermissionTo('delete_users'))
             abort(401);
+        $user->delete();
+        
         return redirect()->route('users');
     }
 
@@ -309,21 +311,18 @@ class UsersController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
 
-            // Check if the user already exists
             $user = User::where('email', $googleUser->getEmail())->first();
 
-            // If the user doesn't exist, create a new user
             if (!$user) {
                 $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
-                    'email_verified_at' => now(), // Automatically verify email
-                    'password' => bcrypt(uniqid()), // Random password
+                    'email_verified_at' => now(),
+                    'password' => bcrypt(uniqid()), 
                 ]);
-                $user->assignRole('customer'); // Assign the 'customer' role
+                $user->assignRole('customer'); 
             }
 
-            // Log in the user
             Auth::login($user);
             return redirect('/');
         } catch (\Exception $e) {
@@ -336,7 +335,6 @@ class UsersController extends Controller
     return view('auth.forgot-password');
 }
 
-// Send password reset email
 public function sendResetLink(Request $request)
 {
     $request->validate([
@@ -359,7 +357,6 @@ public function sendResetLink(Request $request)
     return back()->with('success', 'We sent a password reset link to your email.');
 }
 
-// Show form to reset password
 public function showResetForm($token)
 {
     try {
@@ -371,7 +368,6 @@ public function showResetForm($token)
     return view('auth.reset-password', ['token' => $token, 'email' => $data['email']]);
 }
 
-// Handle the password reset
 public function resetPassword(Request $request)
 {
     $request->validate([
@@ -392,22 +388,36 @@ public function resetPassword(Request $request)
     return redirect()->route('login')->with('success', 'Your password has been reset successfully!');
 }
 
-public function redirectToGithub()
-{
-    return Socialite::driver('github')->redirect();
+
+    public function redirectToGithub()
+    {
+        return Socialite::driver('github')->redirect();
+    }
+
+    public function handleGithubCallback()
+    {
+        try {
+            $githubUser = Socialite::driver('github')->stateless()->user();
+
+            $user = User::where('email', $githubUser->getEmail())->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'name' => $githubUser->getName() ?? $githubUser->getNickname(),
+                    'email' => $githubUser->getEmail(),
+                    'email_verified_at' => now(),
+                    'password' => bcrypt(uniqid()),
+                ]);
+                $user->assignRole('customer');
+            }
+
+            Auth::login($user);
+
+            return redirect('/')->with('success', 'Logged in successfully using GitHub!');
+        } catch (\Exception $e) {
+            return redirect('/login')->withErrors('Unable to login using GitHub.');
+        }
+    }
 }
 
-public function handleGithubCallback()
-{
-    $githubUser = Socialite::driver('github')->user();
 
-    $user = User::firstOrCreate(
-        ['email' => $githubUser->getEmail()],
-        ['name' => $githubUser->getName() ?? $githubUser->getNickname()]
-    );
-
-    Auth::login($user);
-    return redirect()->intended('/');
-}
-
-}

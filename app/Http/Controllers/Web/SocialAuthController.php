@@ -34,4 +34,6 @@ class SocialAuthController extends Controller
             return redirect()->route('login')->withErrors(['msg' => 'Failed to login with Facebook.']);
         }
     }
+
+    
 }

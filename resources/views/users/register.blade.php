@@ -10,10 +10,10 @@
       <!-- Error Handling -->
       <div class="form-group">
         @foreach($errors->all() as $error)
-      <div class="alert alert-danger">
-      <strong>Error!</strong> {{ $error }}
-      </div>
-    @endforeach
+          <div class="alert alert-danger">
+              <strong>Error!</strong> {{ $error }}
+          </div>
+        @endforeach
       </div>
 
       <!-- Name Field -->
@@ -56,6 +56,7 @@
               <a href="{{ route('github.redirect') }}" class="btn btn-outline-primary mx-1">
                 <img src="images/github.png" alt="GitHub Logo" style="width: 30px; height: 30px;">
               </a>
+              
       </div>
       </form>
     </div>

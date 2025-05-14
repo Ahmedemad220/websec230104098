@@ -22,6 +22,20 @@
     <div class="alert alert-danger mt-2">{{ session('error') }}</div>
 @endif
 
+
+@if(!empty(request()->input('keywords')))
+    <div class='card mt-2'>
+
+        <div class='card-body'>
+
+            view search results: <span>{!! request()->keywords !!}</span>
+
+        </div>
+
+    </div>
+
+@endif
+
 <form method="get">
     <div class="row mb-3">
         <div class="col col-sm-2">
@@ -55,6 +69,7 @@
         </div>
     </div>
 </form>
+
 
 @foreach($products as $product)
     <div class="card mt-2">
